@@ -3,37 +3,24 @@ package ru.teti.springcourse.dao;
 import org.springframework.stereotype.Repository;
 import ru.teti.springcourse.models.Person;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.PreparedStatement;
+import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.List;
+
+import static ru.teti.springcourse.dao.DbConstants.*;
 
 @Repository
 public class PersonDAO {
 
-    private static final String URL = "jdbc:postgresql://localhost:5432/first_db";
-    private static final String USERNAME = "postgres";
-    private static final String PASSWORD = "Strong1+7";
-    public static final String DELETE_QUERY = "DELETE FROM Person WHERE id=?";
-    public static final String UPDATE_QUERY = "UPDATE Person SET name=?, age=?, email=? WHERE id=?";
-    public static final String INSERT_QUERY = "INSERT INTO Person VALUES(1, ?, ?, ?)";
-    public static final String SELECT_ALL_QUERY = "SELECT * FROM Person";
-    public static final String SELECT_BY_ID_QUERY = "SELECT * FROM Person WHERE id=?";
-
-    private static Connection connection;
-
-    static {
-
-        try {
-            connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
-        }
-    }
-
     public List<Person> getAll() {
         List<Person> people = new ArrayList<>();
 
-        try {
+        try(Connection connection = getConnection()) {
             Statement statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery(SELECT_ALL_QUERY);
 
@@ -53,7 +40,7 @@ public class PersonDAO {
     public Person getById(int id) {
         Person person = null;
 
-        try {
+        try(Connection connection = getConnection()) {
             PreparedStatement preparedStatement =
                     connection.prepareStatement(SELECT_BY_ID_QUERY);
 
@@ -70,7 +57,7 @@ public class PersonDAO {
     }
 
     public void save(Person person) {
-        try {
+        try(Connection connection = getConnection()) {
             PreparedStatement preparedStatement =
                     connection.prepareStatement(INSERT_QUERY);
 
@@ -85,7 +72,7 @@ public class PersonDAO {
     }
 
     public void update(int id, Person updatedPerson) {
-        try {
+        try(Connection connection = getConnection()) {
             PreparedStatement preparedStatement =
                     connection.prepareStatement(UPDATE_QUERY);
 
@@ -102,7 +89,7 @@ public class PersonDAO {
 
     public void delete(int id) {
         PreparedStatement preparedStatement;
-        try {
+        try(Connection connection = getConnection()) {
             preparedStatement = connection.prepareStatement(DELETE_QUERY);
 
             preparedStatement.setInt(1, id);
@@ -123,5 +110,9 @@ public class PersonDAO {
         person.setAge(resultSet.getInt("age"));
 
         return person;
+    }
+
+    private Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(URL, USERNAME, PASSWORD);
     }
 }
